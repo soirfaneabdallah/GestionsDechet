@@ -26,17 +26,17 @@ Ce projet implémente un **système profond de gestion des déchets** basé sur 
 ### Problématique
 
 Dans un système réel de gestion des déchets, il est crucial de :
- ✅ Trier correctement les déchets connus
- 🔍 Identifier les objets inconnus qui pourraient perturber la chaîne de tri
- ♻️ Adapter le système à de nouvelles catégories au fil du temps
+ -✅ Trier correctement les déchets connus
+ -🔍 Identifier les objets inconnus qui pourraient perturber la chaîne de tri
+ -♻️ Adapter le système à de nouvelles catégories au fil du temps
 
 Notre approche combine un **Variational Autoencoder (VAE)** avec des **blocs résiduels** pour créer un espace latent structuré, permettant à la fois une classification précise et une détection fiable des outliers.
 
 ## 🏗 Architecture du système
 
 ### Vue d'ensemble
-```tikz
-\begin{document}
+
+
 \begin{tikzpicture}[
     block/.style={
         rectangle, rounded corners=5pt, draw=blue!70!black, fill=blue!5,
@@ -98,5 +98,4 @@ Notre approche combine un **Variational Autoencoder (VAE)** avec des **blocs ré
 \draw[arrow] (anomaly) -- (result);
 
 \end{tikzpicture}
-\end{document}
-```
+
