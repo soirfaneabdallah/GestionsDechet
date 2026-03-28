@@ -729,10 +729,6 @@ def plot_result(historique, name_fig="fig", register_plot=False, register_histor
         if metric_name in val_metrics:
             ax.plot(epochs, val_metrics[metric_name], 'r-', label=f'Val {metric_name}', linewidth=2)
         
-        # Ajouter les meilleures valeurs
-        best_train_idx = np.argmax(train_values) if 'acc' in metric_name.lower() or 'f1' in metric_name.lower() else np.argmin(train_values)
-        best_train_val = train_values[best_train_idx]
-        ax.axvline(x=best_train_idx + 1, color='blue', linestyle='--', alpha=0.5, label=f'Best train: {best_train_val:.4f}')
         
         if metric_name in val_metrics:
             best_val_idx = np.argmax(val_metrics[metric_name]) if 'acc' in metric_name.lower() or 'f1' in metric_name.lower() else np.argmin(val_metrics[metric_name])
