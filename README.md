@@ -175,7 +175,7 @@ pip install tensorflow numpy matplotlib opencv-python scikit-learn
 La structure suivante présente une organisation indicative des différents composants du projet. Elle doit être adaptée à l'arborescence réelle du dépôt.
 
 ```text
-projet/
+GestionsDechet/
 │
 ├── data/
 │   ├── train/
