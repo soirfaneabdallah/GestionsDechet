@@ -1,195 +1,49 @@
-# ============================================================
-# MathArt — .gitignore
-# ============================================================
-
 # ---------- Python ----------
 __pycache__/
 *.py[cod]
-*$py.class
-*.so
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
 *.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
 
-# Environnements virtuels
+# ---------- Environnements ----------
 .venv/
 venv/
-ENV/
 env/
-.python-version
-
-# ---------- Tests et couverture ----------
-.pytest_cache/
-.coverage
-.coverage.*
-htmlcov/
-.tox/
-.nox/
-coverage.xml
-*.cover
-.hypothesis/
-
-# ---------- Outils de dev ----------
-.ruff_cache/
-.mypy_cache/
-.dmypy.json
-dmypy.json
-.pyre/
-.pytype/
-cython_debug/
-
-# ---------- Packaging / distribution ----------
-# Sortie PyInstaller
-build/
-dist/
-*.spec
-!scripts/*.spec
-
-# Sortie Inno Setup
-Output/
-*.exe
-*.msi
-*.msix
-
-# Nuitka
-*.build/
-*.dist/
-*.onefile-build/
-
-# ---------- IDE / éditeurs ----------
-.idea/
-.vscode/
-!.vscode/settings.json
-!.vscode/extensions.json
-*.iml
-*.swp
-*.swo
-*~
-.project
-.pydevproject
-.settings/
-.apt_generated/
-
-# ---------- OS ----------
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-desktop.ini
-
-# ---------- Données générées par l'application ----------
-# (au cas où on lance l'app depuis le repo en dev)
-
-# Bibliothèques utilisateur (normalement dans %APPDATA%, mais au cas où)
-configs/
-data/
-user_data/
-
-# Cache : images importées, coefficients Fourier, vignettes
-cache/
-*.cache
-
-# Imports utilisateur
-imports/
-
-# Rapports générés
-reports/
-rapport_*/
-!docs/exemples/rapport_demo.pdf
-!docs/exemples/rapport_demo/
-
-# État de session
-state.json
-*.state.json
-
-# ---------- Audio ----------
-# WAV générés ou importés (les WAV de ressources sont versionnés)
-*.wav
-*.mp3
-*.flac
-*.ogg
-*.m4a
-!resources/sounds/*.wav
-
-# Fichiers temporaires audio
-*.tmp.wav
-
-# ---------- Images générées / cache ----------
-# Les visuels générés à la volée ne sont pas versionnés
-*.png
-*.jpg
-*.jpeg
-*.gif
-*.webp
-
-# MAIS : on garde les assets de ressources et docs
-!resources/icons/*.png
-!resources/icons/*.svg
-!docs/screenshots/*.png
-!docs/screenshots/*.gif
-!docs/exemples/*.png
-!docs/exemples/*.gif
-
-# ---------- Modèles de deep learning ----------
-# Les modèles YOLO / DINOv2 sont téléchargés par scripts/download_models.py
-models/
-*.pt
-*.pth
-*.onnx
-*.bin
-*.safetensors
-*.h5
-*.pkl
-*.joblib
-
-# ---------- Données de rapport ----------
-# Fichiers JSON générés par les rapports
-rapport_*/data/
-*.rapport.json
+.env
+.env.*
+!.env.example
 
 # ---------- Jupyter ----------
 .ipynb_checkpoints/
-*.ipynb_checkpoints
+
+# ---------- Données et modèles (lourds) : seule l'arborescence est versionnée ----------
+data/**
+!data/**/
+!data/**/.gitkeep
+models/**
+!models/**/
+!models/**/.gitkeep
+
+# ---------- Formats volumineux, où qu'ils soient ----------
+*.keras
+*.h5
+*.hdf5
+*.pkl
+*.zip
+
+# ---------- IDE / OS ----------
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+desktop.ini
 
 # ---------- Logs ----------
 *.log
 logs/
-
-# ---------- Secrets et configuration locale ----------
-.env
-.env.*
-!.env.example
-secrets.json
-*.secret
-*.key
-*.pem
-
-# ---------- Fichiers système Windows ----------
-$RECYCLE.BIN/
-*.lnk
-*.stackdump
-
-# ---------- Divers ----------
-*.bak
-*.orig
-*.rej
-TODO.local.md
-NOTES.local.md

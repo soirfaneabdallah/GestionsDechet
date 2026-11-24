@@ -1,3 +1,4 @@
+"""Évaluation et comparaison de modèles de classification."""
 import time
 from typing import Dict, Tuple
 import numpy as np
@@ -8,7 +9,8 @@ from datetime import datetime
 import json
 import os
 import tensorflow as tf
-from tensorflow.keras.preprocessing import image
+
+from .paths import FIGURES_DIR, METRICS_DIR
 
 def compare_models(y_true_test: np.ndarray,
                    y_pred_test_model1: np.ndarray,
@@ -126,7 +128,8 @@ def evaluation(model, X_test, y_test, return_conf_mat=True, return_clss=True, la
         print(f"Weighted F1-score: {f1_weighted:.4f}")
     return y_pred
 
-def plot_result(historique, name_fig="fig", register_plot=False, register_history=True, save_dir="training_results"):
+def plot_result(historique, name_fig="fig", register_plot=False, register_history=True,
+                save_dir=None, figures_dir=FIGURES_DIR, metrics_dir=METRICS_DIR):
     """
     Affiche et sauvegarde les courbes d'entraînement pour TOUTES les métriques disponibles
     
@@ -135,15 +138,21 @@ def plot_result(historique, name_fig="fig", register_plot=False, register_histor
         name_fig : nom du fichier pour la figure (sans extension)
         register_plot : bool, sauvegarde la figure si True
         register_history : bool, sauvegarde l'historique complet si True
-        save_dir : répertoire de sauvegarde (créé automatiquement)
+        save_dir : si fourni, dossier unique pour figure + historique (rétro-compatibilité)
+        figures_dir : dossier de la figure (défaut : results/figures)
+        metrics_dir : dossier de l'historique JSON/CSV (défaut : results/metrics)
     
     Returns:
         dict: dictionnaire contenant toutes les métriques
     """
     
     # Créer le répertoire de sauvegarde si nécessaire
-    if register_plot or register_history:
-        os.makedirs(save_dir, exist_ok=True)
+    if save_dir is not None:
+        figures_dir = metrics_dir = save_dir
+    if register_plot:
+        os.makedirs(figures_dir, exist_ok=True)
+    if register_history:
+        os.makedirs(metrics_dir, exist_ok=True)
     
     # Récupérer TOUTES les métriques disponibles dans l'historique
     all_metrics = {}
@@ -212,7 +221,7 @@ def plot_result(historique, name_fig="fig", register_plot=False, register_histor
     
     # Sauvegarde de la figure
     if register_plot:
-        fig_path = os.path.join(save_dir, f"{name_fig}.png")
+        fig_path = os.path.join(figures_dir, f"{name_fig}.png")
         plt.savefig(fig_path, dpi=300, bbox_inches='tight')
         print(f"Figure sauvegardée : {fig_path}")
     
@@ -250,13 +259,13 @@ def plot_result(historique, name_fig="fig", register_plot=False, register_histor
             }
         
         # Sauvegarde en JSON
-        json_path = os.path.join(save_dir, f"{name_fig}_history.json")
+        json_path = os.path.join(metrics_dir, f"{name_fig}_history.json")
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(history_dict, f, indent=4, ensure_ascii=False)
         print(f"Historique sauvegardé : {json_path}")
         
         # Sauvegarde en CSV
-        csv_path = os.path.join(save_dir, f"{name_fig}_history.csv")
+        csv_path = os.path.join(metrics_dir, f"{name_fig}_history.csv")
         with open(csv_path, 'w', encoding='utf-8') as f:
             # En-tête
             headers = ['epoch'] + list(all_metrics.keys())
@@ -272,65 +281,68 @@ def plot_result(historique, name_fig="fig", register_plot=False, register_histor
                 f.write(','.join(row) + '\n')
         print(f"CSV sauvegardé : {csv_path}")
 
-def prepare_image(img_path, target_size):
-    img = image.load_img(img_path, target_size=(target_size,target_size))
-    img_array = image.img_to_array(img)
-    img_array = np.expand_dims(img_array, axis=0)  
-    img_array /= 255.0  
-    return img_array
 
-def predict(img_path, discriminateur,classificateur, target_size=225, list_name = None):
-    img_array, img= prepare_image(img_path , target_size)
-    est_connue = discriminateur.predict(img_array)
-    if est_connue[0][0] >=0.5:
-        predict_proba = classificateur.predict(img_array)
-        y_pred = np.argmax(predict_proba, axis=1)
-        result = np.max(predict_proba[0]*100)
-        plt.imshow(img)
-        plt.title(f"{list_name[y_pred[0]]} avec une précision de {result}%")
-    else:
-        result = est_connue[0][0]*100
-        plt.imshow(img)
-        plt.title(f"Classe inconnue {result}%")
-        
-def concat_datasets(x_train, y_train, x_test, y_test,
-                    x_train1, y_train1, x_test1, y_test1):
-    """
-    Concatène deux jeux de données (train/test).
-    Les arrays doivent avoir des dimensions compatibles.
-    """
-    # Concat train
-    X_train_full = np.concatenate([x_train, x_train1], axis=0)
-    y_train_full = np.concatenate([y_train, y_train1], axis=0)
+def compare_models_full(model1, model2, X_test, y_test, class_names):
+    """Compare deux modèles Keras (accuracy, F1, params, vitesse, matrices de confusion)."""
+    def evaluate_model(model, X, y_true):
+        start = time.time()
+        y_prob = model.predict(X)
+        end = time.time()
+        y_pred = np.argmax(y_prob, axis=1)
+        total_time = end - start
+        fps = len(X) / total_time
 
-    # Concat test
-    X_test_full = np.concatenate([x_test, x_test1], axis=0)
-    y_test_full = np.concatenate([y_test, y_test1], axis=0)
+        acc = accuracy_score(y_true, y_pred)
+        f1 = f1_score(y_true, y_pred, average='macro')
+        report = classification_report(y_true, y_pred, target_names=class_names, digits=4)
+        conf_matrix = confusion_matrix(y_true, y_pred)
 
-    return X_train_full, y_train_full, X_test_full, y_test_full
+        return {
+            'acc': acc,
+            'f1': f1,
+            'fps': fps,
+            'time': total_time,
+            'y_pred': y_pred,
+            'report': report,
+            'conf_matrix': conf_matrix,
+            'params': model.count_params()
+        }
 
+    res1 = evaluate_model(model1, X_test, y_test)
+    res2 = evaluate_model(model2, X_test, y_test)
 
-def select_data(X_train, y_train, n, shuffle=True, random_state=None):
-   
-    if random_state is not None:
-        np.random.seed(random_state)
+    # --- Impression détaillée
+    print("==========  Détails - Modèle 1 ==========")
+    print(res1['report'])
+    print(f"Total params : {res1['params']}")
+    print(f"Accuracy : {res1['acc']:.4f} | F1-macro : {res1['f1']:.4f}")
+    print(f"Prediction time : {res1['time']:.2f}s | FPS : {res1['fps']:.2f}")
 
-    classes = np.unique(y_train)
-    X_selected, y_selected = [], []
+    print("\n==========  Détails - Modèle 2 ==========")
+    print(res2['report'])
+    print(f"Total params : {res2['params']}")
+    print(f"Accuracy : {res2['acc']:.4f} | F1-macro : {res2['f1']:.4f}")
+    print(f"Prediction time : {res2['time']:.2f}s | FPS : {res2['fps']:.2f}")
 
-    for cls in classes:
-        idx = np.where(y_train == cls)[0]
-        if len(idx) < n:
-            raise ValueError(f"Classe {cls} n'a que {len(idx)} échantillons, inférieur à n={n}.")
-        chosen_idx = np.random.choice(idx, n, replace=False)
-        X_selected.append(X_train[chosen_idx])
-        y_selected.append(y_train[chosen_idx])
+    # --- Matrices de confusion
+    fig, axs = plt.subplots(1, 2, figsize=(16, 6))
+    sns.heatmap(res1['conf_matrix'].astype('float') / res1['conf_matrix'].sum(axis=1)[:, np.newaxis],
+                annot=True, fmt=".2%", xticklabels=class_names, yticklabels=class_names,
+                ax=axs[0], cmap="Blues")
+    axs[0].set_title("Confusion Matrix - Model 1")
 
-    X_selected = np.concatenate(X_selected, axis=0)
-    y_selected = np.concatenate(y_selected, axis=0)
+    sns.heatmap(res2['conf_matrix'].astype('float') / res2['conf_matrix'].sum(axis=1)[:, np.newaxis],
+                annot=True, fmt=".2%", xticklabels=class_names, yticklabels=class_names,
+                ax=axs[1], cmap="Greens")
+    axs[1].set_title("Confusion Matrix - Model 2")
+    plt.tight_layout()
+    plt.show()
 
-    if shuffle:
-        perm = np.random.permutation(len(y_selected))
-        X_selected, y_selected = X_selected[perm], y_selected[perm]
-
-    return X_selected, y_selected
+    # --- Résumé comparatif
+    print("\n==========  Résumé comparatif ==========")
+    print(f"{'':<18} | {'Model 1':<12} | {'Model 2':<12}")
+    print(f"{'Accuracy':<18} | {res1['acc']:<12.4f} | {res2['acc']:<12.4f}")
+    print(f"{'Macro F1-score':<18} | {res1['f1']:<12.4f} | {res2['f1']:<12.4f}")
+    print(f"{'Params':<18} | {res1['params']:<12} | {res2['params']:<12}")
+    print(f"{'Time (s)':<18} | {res1['time']:<12.2f} | {res2['time']:<12.2f}")
+    print(f"{'FPS':<18} | {res1['fps']:<12.2f} | {res2['fps']:<12.2f}")

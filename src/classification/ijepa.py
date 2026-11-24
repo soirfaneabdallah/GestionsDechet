@@ -1,3 +1,4 @@
+"""Masquage I-JEPA et générateur de données associé."""
 import random
 import math
 import numpy as np

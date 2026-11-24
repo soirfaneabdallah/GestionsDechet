@@ -1,3 +1,4 @@
+"""Chargement, préparation et sérialisation des jeux d'images (classe ``Load_data``)."""
 import os
 import copy
 import random
@@ -11,6 +12,18 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 import math
+
+# Les archives .zip produites avant la réorganisation contiennent un pickle qui
+# référence l'ancien paquet ``outils`` : on redirige vers le module actuel.
+_LEGACY_MODULES = {"outils.data_loader": __name__}
+
+
+class _LegacyCompatUnpickler(pickle.Unpickler):
+    """Unpickler capable de relire les anciennes archives (``outils.data_loader``)."""
+
+    def find_class(self, module, name):
+        return super().find_class(_LEGACY_MODULES.get(module, module), name)
+
 
 class Load_data:
     """
@@ -412,7 +425,7 @@ class Load_data:
         """
         with zipfile.ZipFile(zip_path, 'r') as zf:
             with zf.open(internal_name) as f:
-                obj = pickle.load(f)
+                obj = _LegacyCompatUnpickler(f).load()
                 
                 # Restaurer les données originales si disponibles
                 if obj.original_data_ is not None:
